@@ -1,1 +1,9 @@
 EDA/halfhourly_dataset/
+
+GRU_logs/
+
+LSTM_logs/
+
+lightning_logs/
+
+RNN_model.ipynb

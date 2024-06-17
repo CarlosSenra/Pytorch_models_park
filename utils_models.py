@@ -66,14 +66,15 @@ def save_graph_image(predictions,df_principal,figsize= (14, 4)):
     plt.legend()
     plt.savefig('energy_prediction_plot.png', dpi=300, bbox_inches='tight')
 
-def evaluation_metrics(val_dataloader,best_model):    
+def evaluation_metrics(val_dataloader,best_model,householde_name):    
     predictions = best_model.predict(val_dataloader, return_y=True, trainer_kwargs=dict(accelerator="cpu"))
     mae = MAE()(predictions.output, predictions.y)
     mape = MAPE()(predictions.output, predictions.y)
     smape = SMAPE()(predictions.output, predictions.y)
     rmse = RMSE()(predictions.output, predictions.y)
 
-    dict_ = {'MAE':[mae.to('cpu').numpy().round(3)],
+    dict_ = {'House Hold':householde_name,
+            'MAE':[mae.to('cpu').numpy().round(3)],
             'MAPE':[mape.to('cpu').numpy().round(3)],
             'SMAPE':[smape.to('cpu').numpy().round(3)],
             'RMSE':[rmse.to('cpu').numpy().round(3)]}
@@ -180,7 +181,114 @@ def run_GLU_model(df,csv_file_name,
     path_pred + "\\" + csv_file_name
     df_predictions.to_csv(path_pred + "\\" + "GLU_predict_" + csv_file_name, index=False)
 
-    eval_dict = evaluation_metrics(val_dataloader,best_rnn)
+    eval_dict = evaluation_metrics(val_dataloader,best_rnn,csv_file_name)
     df_eval_metrics = pd.DataFrame(eval_dict)
     df_eval_metrics.to_csv(path_metrics_val + "\\" + "GLU_eval_metrics_" + csv_file_name, index=False)
 
+
+
+
+
+
+def run_LSTM_model(df,csv_file_name,
+                    max_prediction_length = 168,
+                    max_encoder_length = 720,
+                    batch_size = 128,
+                    path_pred = config.PATH_PREDICTIONS,
+                    path_metrics_val = config.PATH_METRICS_VALUES,
+                    seed = 81):
+    training_cutoff = df["time_idx"].max() - max_prediction_length
+
+    pl.seed_everything(seed)
+
+    training = TimeSeriesDataSet(
+                    df[lambda x: df.time_idx <= training_cutoff],
+                    time_idx = 'time_idx',
+                    target = 'Energy_kwh',
+                    group_ids = ['house_hold'],
+                    time_varying_known_reals=['time_idx'],
+                    time_varying_unknown_reals = ['Energy_kwh'],
+                    static_categoricals=['house_hold'],
+                    min_encoder_length = max_encoder_length // 2,
+                    max_encoder_length = max_encoder_length,
+                    min_prediction_length=1,
+                    max_prediction_length = max_prediction_length,
+                    categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True)}
+        )
+
+
+    validation = TimeSeriesDataSet.from_dataset(training, 
+                                                df,
+                                                predict = True,
+                                                stop_randomization = True)
+
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    train_dataloader = training.to_dataloader(train = True,
+                                            batch_size = batch_size,
+                                            num_workers = 1)
+
+
+    val_dataloader = validation.to_dataloader(train = False,
+                                            batch_size = batch_size,
+                                            num_workers = 1)
+
+    rnn_LSTM = RecurrentNetwork.from_dataset(
+        training,
+        cell_type = 'LSTM',
+        learning_rate = .1,
+        hidden_size = 15,
+        dropout = .2,
+        loss = MAE(),#QuantileLoss(quantiles=[0.05,0.5,0.95]),
+        optimizer = "Ranger",
+        rnn_layers  = 2
+        )
+    
+    early_stop_callback = EarlyStopping(monitor = "val_loss",
+                                    min_delta = 0.00000001,
+                                    patience = 1,
+                                    verbose = True,
+                                    mode = "min")
+
+
+    lr_logger = LearningRateMonitor()
+    logger_LSTM = TensorBoardLogger("LSTM_logs")
+
+    checkpoint_callback = ModelCheckpoint(monitor="val_loss")
+
+    trainer_LSTM = pl.Trainer(
+                            max_epochs = 350,
+                            accelerator = 'gpu',
+                            enable_model_summary = True,
+                            limit_train_batches = 300,
+                            gradient_clip_val = 0.1,
+                            callbacks = [lr_logger, early_stop_callback, checkpoint_callback],
+                            logger = logger_LSTM,
+                            enable_progress_bar=False
+            )
+    
+    trainer_LSTM.fit(
+                    rnn_LSTM,
+                    train_dataloaders = train_dataloader,
+                    val_dataloaders = val_dataloader)
+
+    best_model_path = trainer_LSTM.checkpoint_callback.best_model_path
+    best_rnn = RecurrentNetwork.load_from_checkpoint(best_model_path)
+
+    best_model_path = str(best_model_path)
+    best_rnn = RecurrentNetwork.load_from_checkpoint(best_model_path)
+
+    predictions = best_rnn.predict(val_dataloader, mode = "raw", return_x = True)
+
+    df_predictions = pd.DataFrame({'time_idx':predictions.x['decoder_time_idx'][0].to('cpu').numpy(),
+                                'Real':predictions.x['decoder_target'][0].to('cpu').numpy().round(3),
+                                'predict':predictions.output[0][0].to('cpu').numpy().round(3).squeeze()})
+
+    
+    path_pred + "\\" + csv_file_name
+    df_predictions.to_csv(path_pred + "\\" + "LSTM_predict_" + csv_file_name, index=False)
+
+    eval_dict = evaluation_metrics(val_dataloader,best_rnn,csv_file_name)
+    df_eval_metrics = pd.DataFrame(eval_dict)
+    df_eval_metrics.to_csv(path_metrics_val + "\\" + "LSTM_eval_metrics_" + csv_file_name, index=False)
