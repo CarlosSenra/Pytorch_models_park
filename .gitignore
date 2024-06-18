@@ -4,6 +4,8 @@ GRU_logs/
 
 LSTM_logs/
 
+TFT_logs/
+
 lightning_logs/
 
 RNN_model.ipynb
