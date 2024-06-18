@@ -42,8 +42,8 @@ def run_GLU_model(df,csv_file_name,
                   max_prediction_length = 168,
                   max_encoder_length = 720,
                   batch_size = 128,
-                  path_pred = config.PATH_PREDICTIONS_GLU,
-                  path_metrics_val = config.PATH_METRICS_VALUES_GLU,
+                  path_pred = config.PATH_PREDICTIONS_GRU,
+                  path_metrics_val = config.PATH_METRICS_VALUES_GRU,
                   seed = 81):
     training_cutoff = df["time_idx"].max() - max_prediction_length
 
