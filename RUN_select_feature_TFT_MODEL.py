@@ -19,4 +19,13 @@ if __name__ == "__main__":
                            max_prediction_length = 20,
                            max_encoder_length = 20,
                            batch_size = 128,
+                           patience=1,
                            select_fatures = True)
+        
+    
+    functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_TFT_SELECT_FEATURES,
+                                            config.PATH_RESULTS_TFT_SELECT_FEATURES, 
+                                            "TFT")
+
+    functions.cleaning_attention_results(config.PATH_ATTENTION_SELECT_FEATURES,
+                                        config.PATH_RESULTS_TFT_SELECT_FEATURES)

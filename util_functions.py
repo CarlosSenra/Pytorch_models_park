@@ -63,7 +63,28 @@ def get_attention_values(interpretation,householde_name):
   return encoder_dict,decoder_dict
 
 
+def cleaning_eval_metrics_results(path_origin, path_destiny,model_name):
+    list_csv = os.listdir(path_origin)
+    df_list = []
+    for csv in list_csv:
+        df_list.append(pd.read_csv(path_origin + "\\" + csv))
+    concat_df = pd.concat(df_list)
+    concat_df.to_csv(path_destiny + "\\" + f"{model_name}_metrics_results.csv",index=False)
 
+
+def cleaning_attention_results(path_origin, path_destiny):
+    list_csv = os.listdir(path_origin)
+    df_encoder_list = []
+    df_decoder_list = []
+    for csv in list_csv:
+        if csv.split("_")[0] == 'decoder':
+            df_encoder_list.append(pd.read_csv(path_origin + "\\" + csv))
+        else:
+            df_decoder_list.append(pd.read_csv(path_origin + "\\" + csv))
+    concat_df_encoder = pd.concat(df_encoder_list)
+    concat_df_decoder = pd.concat(df_decoder_list)
+    concat_df_encoder.to_csv(path_destiny + "\\" + "encoder_attention_results.csv",index=False)
+    concat_df_decoder.to_csv(path_destiny + "\\" + "decoder_attention_results.csv",index=False)
 
 
 
