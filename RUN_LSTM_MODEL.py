@@ -19,8 +19,8 @@ if __name__ == "__main__":
                            cell_type = 'LSTM',
                            path_pred = config.PATH_PREDICTIONS_LSTM,
                            path_metrics_val = config.PATH_METRICS_VALUES_LSTM,
-                           max_prediction_length = 20,
-                           max_encoder_length = 20,
+                           max_prediction_length = 168,
+                           max_encoder_length = len(df) - 168,
                            batch_size = 128,
                            patience=1)
         

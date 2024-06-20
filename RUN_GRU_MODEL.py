@@ -19,8 +19,8 @@ if __name__ == "__main__":
                            cell_type = 'GRU',
                            path_pred = config.PATH_PREDICTIONS_GRU,
                            path_metrics_val = config.PATH_METRICS_VALUES_GRU,
-                           max_prediction_length = 20,
-                           max_encoder_length = 20,
+                           max_prediction_length = 168,
+                           max_encoder_length = len(df) - 168,
                            batch_size = 128,
                            patience=1)
         
