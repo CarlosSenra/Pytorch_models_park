@@ -297,34 +297,18 @@ def run_RNN_model(df,csv_file_name,
                                 time_idx = 'time_idx',
                                 target = 'Energy_kwh',
                                 group_ids = ['house_hold'],
-                                time_varying_known_reals=['time_idx',
-                                                        #'temperature',
-                                                        #'windSpeed'
-                                                        ],
+                                #time_varying_known_reals=['time_idx'],
                                 time_varying_unknown_reals = ['Energy_kwh'],
                                 static_categoricals=['house_hold'],
-                                time_varying_known_categoricals = ['year',
-                                                                #'month',
-                                                                #'day',
-                                                                'dayofweek_num',
-                                                                'hour',
-                                                                #'bool_weather_missing_values',
-                                                                'precipType',
-                                                                #'icon',
-                                                                #'summary'
-                                                                ],
+                                time_varying_known_categoricals = ['month',
+                                                                    'dayofweek_num',
+                                                                    'hour',
+                                                                    'weekend_holiday'],
                                 min_encoder_length = max_encoder_length // 2,
                                 max_encoder_length = max_encoder_length,
                                 min_prediction_length=1,
                                 max_prediction_length = max_prediction_length,
-                                categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True),
-                                                        'precipType': NaNLabelEncoder(add_nan=True, warn=True),
-                                                        'icon': NaNLabelEncoder(add_nan=True, warn=True),
-                                                        'summary': NaNLabelEncoder(add_nan=True, warn=True)},
-                                target_normalizer=None,          
-                                add_relative_time_idx=True,
-                                add_target_scales=True,
-                                add_encoder_length=True
+                                categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True)}
     )
 
 
@@ -355,7 +339,7 @@ def run_RNN_model(df,csv_file_name,
         )
     
     early_stop_callback = EarlyStopping(monitor = "val_loss",
-                                    min_delta = 0.00001,
+                                    min_delta = 0.0001,
                                     patience = patience,
                                     verbose = True,
                                     mode = "min")

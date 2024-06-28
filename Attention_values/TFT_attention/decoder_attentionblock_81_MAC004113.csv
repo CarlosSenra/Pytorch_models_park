@@ -1,2 +1,2 @@
-year,month,day,dayofweek_num,hour,bool_weather_missing_values,House_Hold
-10.80%,5.39%,19.49%,10.71%,7.35%,46.25%,BLOCK_81_MAC004113
+month,dayofweek_num,hour,weekend_holiday,House_Hold
+17.79%,26.70%,51.38%,4.13%,BLOCK_81_MAC004113

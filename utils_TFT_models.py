@@ -33,7 +33,8 @@ from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimi
                                        #TFT
 ##########################################################################################
 def run_TFT_model(df,csv_file_name,
-                  learning_rate = .1,
+                  encoder_list,decoder_list,
+                  learning_rate = .07,
                   hidden_size = 15,
                   dropout = .2,
                   attention_head_size = 4,
@@ -59,22 +60,25 @@ def run_TFT_model(df,csv_file_name,
                         time_idx = 'time_idx',
                         target = 'Energy_kwh',
                         group_ids = ['house_hold'],
-                        time_varying_known_reals=['time_idx',
-                                                'temperature',
-                                                'windSpeed'],
-                        time_varying_unknown_reals = ['Energy_kwh'],
+                        #time_varying_known_reals=[#'time_idx',
+                        #                        'temperature'#,
+                                                #'windSpeed'
+                        #                        ],
+                        #time_varying_unknown_reals = ['Energy_kwh'],
                                                     #'temperature',
                                                     #'windSpeed'],
                         static_categoricals=['house_hold'],
-                        time_varying_known_categoricals = ['year',
-                                                        'month',
-                                                        'day',
-                                                        'dayofweek_num',
-                                                        'hour',
-                                                        'bool_weather_missing_values',
-                                                        'precipType',
-                                                        'icon',
-                                                        'summary'],
+                        time_varying_known_categoricals = [#'year',
+                                                            'month',
+                                                            #'day',
+                                                            'dayofweek_num',
+                                                            'hour',
+                                                            'bool_weather_missing_values',
+                                                            'precipType',
+                                                            'weekend_holiday'
+                                                            #'icon',
+                                                            #'summary'
+                                                            ],
                         #time_varying_unknown_categoricals= ['precipType',
                         #                                   'icon',
                         #                                   'summary'],
@@ -84,40 +88,36 @@ def run_TFT_model(df,csv_file_name,
                         max_prediction_length = max_prediction_length,
                         categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True),
                                                 'precipType': NaNLabelEncoder(add_nan=True, warn=True),
-                                                'icon': NaNLabelEncoder(add_nan=True, warn=True),
-                                                'summary': NaNLabelEncoder(add_nan=True, warn=True)},
+                                                #'icon': NaNLabelEncoder(add_nan=True, warn=True),
+                                                #'summary': NaNLabelEncoder(add_nan=True, warn=True)
+                                                },
                         target_normalizer=None,          
-                        add_relative_time_idx=True,
-                        add_target_scales=True,
-                        add_encoder_length=True
+                        #add_relative_time_idx=True,
+                        #add_target_scales=True,
+                        #add_encoder_length=True
         )
     else:
-                training = TimeSeriesDataSet(
+        print("Nao é select feature")
+        training = TimeSeriesDataSet(
                         df[lambda x: df.time_idx <= training_cutoff],
                         time_idx = 'time_idx',
                         target = 'Energy_kwh',
                         group_ids = ['house_hold'],
-                        time_varying_known_reals=['time_idx'],
-                        time_varying_unknown_reals = ['Energy_kwh'],
                         static_categoricals=['house_hold'],
-                        time_varying_known_categoricals = ['year',
-                                                        'dayofweek_num',
-                                                        'hour',
-                                                        'precipType'],
+                        time_varying_known_categoricals = [ 'month',
+                                                            'dayofweek_num',
+                                                            'hour',
+                                                            'weekend_holiday'],
                         min_encoder_length = max_encoder_length // 2,
                         max_encoder_length = max_encoder_length,
                         min_prediction_length=1,
                         max_prediction_length = max_prediction_length,
-                        categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True),
-                                                'precipType': NaNLabelEncoder(add_nan=True, warn=True),
-                                                'icon': NaNLabelEncoder(add_nan=True, warn=True),
-                                                'summary': NaNLabelEncoder(add_nan=True, warn=True)},
-                        target_normalizer=None,          
-                        add_relative_time_idx=True,
-                        add_target_scales=True,
-                        add_encoder_length=True
+                        categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True),},
+                        target_normalizer=None
         )
-
+    print("##########################################################")
+    print(training)
+    print("##########################################################")
 
     validation = TimeSeriesDataSet.from_dataset(training, 
                                                 df,
@@ -146,9 +146,11 @@ def run_TFT_model(df,csv_file_name,
                                                 optimizer = optimizer,
                                                 lstm_layers = lstm_layers
                                             )
-    
+    print("##########################################################")
+    print(tft)
+    print("##########################################################")
     early_stop_callback = EarlyStopping(monitor = "val_loss",
-                                    min_delta = 0.00001,
+                                    min_delta = 0.0001,
                                     patience = patience,
                                     verbose = True,
                                     mode = "min")
@@ -204,7 +206,7 @@ def run_TFT_model(df,csv_file_name,
         df_eval_metrics = pd.DataFrame(eval_dict)
         df_eval_metrics.to_csv(path_metrics_val + "\\" + "eval_metrics_" + csv_file_name, index=False)
 
-        attention_encoder,  attention_decoder= util_functions.get_attention_values(interpretation,csv_file_name)
+        attention_encoder,  attention_decoder= util_functions.get_attention_values(interpretation,csv_file_name,encoder_list,decoder_list)
         attention_encoder_df = pd.DataFrame(attention_encoder)
         attention_decoder_df = pd.DataFrame(attention_decoder)
         attention_encoder_df.to_csv(attention_path + "\\" + "encoder_attention" + csv_file_name, index=False)
@@ -223,7 +225,7 @@ def run_TFT_model(df,csv_file_name,
         df_eval_metrics = pd.DataFrame(eval_dict)
         df_eval_metrics.to_csv(path_metrics_val + "\\" + "eval_metrics_" + csv_file_name, index=False)
 
-        attention_encoder,  attention_decoder= util_functions.get_attention_values(interpretation,csv_file_name)
+        attention_encoder,  attention_decoder= util_functions.get_attention_values(interpretation,csv_file_name,encoder_list,decoder_list)
         attention_encoder_df = pd.DataFrame(attention_encoder)
         attention_decoder_df = pd.DataFrame(attention_decoder)
         attention_encoder_df.to_csv(attention_path + "\\" + "encoder_attention" + csv_file_name, index=False)

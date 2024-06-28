@@ -14,12 +14,17 @@ def get_random_blocks(num_blocks = 5, seed=42):
 
 def get_random_household(block_numer, seed = 42):
     random.seed(seed)
+    holidays = pd.read_csv('uk_bank_holidays.csv')
+    holidays['Bank holidays'] = pd.to_datetime(holidays['Bank holidays'])
+    holidays = holidays.loc[(holidays['Bank holidays'].dt.year >= 2013)]
     df = pd.read_csv(f'halfhourly_dataset/halfhourly_dataset/block_{block_numer}.csv')
     df = df.rename(columns={'LCLid':'house_hold','tstp':'time','energy(kWh/hh)':'Energy_kwh'})
     df.iloc[df[df.Energy_kwh == 'Null'].Energy_kwh.index,2] = '0'
     df.Energy_kwh = pd.to_numeric(df.Energy_kwh)
     df.time = pd.to_datetime(df.time)
     df = df.loc[((df['time'].dt.year >= 2013) & (df.time.dt.month.isin([1,2,3,4,5,6,7,8,9,10,11,12]))) | (df['time'].dt.year == 2014)]
+    df['weekend_holiday'] = (df.time.dt.day_of_week >= 5) | (df['time'].isin(holidays['Bank holidays']))
+    df['weekend_holiday'] = df['weekend_holiday'].astype(int)
     house_selected = random.choice(df.house_hold.unique())
     df = df[df.house_hold == house_selected]
     house_selected = f"block_{block_numer}_"+house_selected
@@ -48,6 +53,14 @@ def transform_half_in_hourly(df : pd.DataFrame):
 def add_weater_data(df:pd.DataFrame,df_weather:pd.DataFrame):
     df_merged = pd.merge(df,df_weather,how='left',on = 'time')
     return df_merged
+
+def add_weekend_holidays(df:pd.DataFrame):
+    holidays = pd.read_csv('uk_bank_holidays.csv')
+    holidays['Bank holidays'] = pd.to_datetime(holidays['Bank holidays'])
+    holidays = holidays.loc[(holidays['Bank holidays'].dt.year >= 2013)]
+    df['weekend_holiday'] = (df.time.dt.day_of_week >= 5) | (df['time'].isin(holidays['Bank holidays']))
+    df['weekend_holiday'] = df['weekend_holiday'].astype(int)
+    return df
 
 def add_bool_weather_missing_values(df:pd.DataFrame):
     df['bool_weather_missing_values'] = df['temperature'].apply(lambda x: 1 if x == np.nan else 0)

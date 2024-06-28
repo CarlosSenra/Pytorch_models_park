@@ -1,2 +1,2 @@
-year,month,day,dayofweek_num,hour,bool_weather_missing_values,precipType,icon,summary,time_idx,relative_time_idx,Energy_kwh,temperature,windSpeed,House_Hold
-8.12%,1.66%,6.77%,13.63%,8.28%,2.95%,5.78%,2.91%,0.68%,25.12%,11.68%,4.19%,3.39%,4.85%,BLOCK_81_MAC004113
+month,dayofweek_num,hour,bool_weather_missing_values,precipType,weekend_holiday,House_Hold
+17.55%,35.10%,16.85%,7.46%,7.82%,15.22%,BLOCK_81_MAC004113

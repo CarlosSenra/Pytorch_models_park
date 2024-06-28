@@ -22,7 +22,7 @@ if __name__ == "__main__":
                            max_prediction_length = 168,
                            max_encoder_length = len(df) - 168,
                            batch_size = 128,
-                           patience=1)
+                           patience=2)
         
     
     functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_LSTM,

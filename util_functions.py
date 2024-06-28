@@ -25,6 +25,7 @@ def get_csv(path,csv_file_name):
     df['house_hold'] = df['house_hold'].astype(str)
     df['precipType'] = df['precipType'].astype(str)
     df['icon'] = df['icon'].astype(str)
+    df['weekend_holiday'] = df['weekend_holiday'].astype(str)
     df['summary'] = df['summary'].astype(str)
     df['bool_weather_missing_values'] = df['bool_weather_missing_values'].astype(str)
 
@@ -47,11 +48,11 @@ def evaluation_metrics(val_dataloader,best_model,householde_name,execution_time)
     return dict_
 
 
-def get_attention_values(interpretation,householde_name):
+def get_attention_values(interpretation,householde_name,encoder_list,decoder_list):
   att_encoder_values = interpretation['encoder_variables'].to('cpu').numpy()
   att_decoder_values = interpretation['decoder_variables'].to('cpu').numpy()
-  tft_encoder = ['year', 'month', 'day', 'dayofweek_num', 'hour', 'bool_weather_missing_values', 'precipType', 'icon', 'summary','time_idx', 'relative_time_idx', 'Energy_kwh', 'temperature', 'windSpeed']
-  tft_decoder = ['year', 'month', 'day', 'dayofweek_num', 'hour', 'bool_weather_missing_values', 'time_idx', 'relative_time_idx']
+  tft_encoder = encoder_list
+  tft_decoder = decoder_list
   encoder_dict = {}
   decoder_dict = {}
   for value, name in zip(att_encoder_values,tft_encoder):   
@@ -67,7 +68,11 @@ def cleaning_eval_metrics_results(path_origin, path_destiny,model_name):
     list_csv = os.listdir(path_origin)
     df_list = []
     for csv in list_csv:
-        df_list.append(pd.read_csv(path_origin + "\\" + csv))
+        if os.path.isfile(os.path.join(path_origin,csv)):
+            print(csv)
+            df_list.append(pd.read_csv(path_origin + "\\" + csv))
+        else:
+           print('Nao e csv')
     concat_df = pd.concat(df_list)
     concat_df.to_csv(path_destiny + "\\" + f"{model_name}_metrics_results.csv",index=False)
 
@@ -77,10 +82,13 @@ def cleaning_attention_results(path_origin, path_destiny):
     df_encoder_list = []
     df_decoder_list = []
     for csv in list_csv:
-        if csv.split("_")[0] == 'decoder':
-            df_encoder_list.append(pd.read_csv(path_origin + "\\" + csv))
+        if os.path.isfile(os.path.join(path_origin,csv)):
+            if csv.split("_")[0] == 'decoder':
+                df_encoder_list.append(pd.read_csv(path_origin + "\\" + csv))
+            else:
+                df_decoder_list.append(pd.read_csv(path_origin + "\\" + csv))
         else:
-            df_decoder_list.append(pd.read_csv(path_origin + "\\" + csv))
+            print('Nao e csv')
     concat_df_encoder = pd.concat(df_encoder_list)
     concat_df_decoder = pd.concat(df_decoder_list)
     concat_df_encoder.to_csv(path_destiny + "\\" + "encoder_attention_results.csv",index=False)
