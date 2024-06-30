@@ -25,7 +25,7 @@ def get_csv(path,csv_file_name):
     df['house_hold'] = df['house_hold'].astype(str)
     df['precipType'] = df['precipType'].astype(str)
     df['icon'] = df['icon'].astype(str)
-    df['weekend_holiday'] = df['weekend_holiday'].astype(str)
+    df['holiday'] = df['holiday'].astype(str)
     df['summary'] = df['summary'].astype(str)
     df['bool_weather_missing_values'] = df['bool_weather_missing_values'].astype(str)
 

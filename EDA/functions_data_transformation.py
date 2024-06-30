@@ -31,6 +31,36 @@ def get_random_household(block_numer, seed = 42):
     
     return df, house_selected
 
+
+def get_acorn_houses_list(acorn_dict,size=5,seed=10):
+    info_dataset = pd.read_csv(f'informations_households.csv')
+    np.random.seed(seed)
+    house_list = []
+    for key in acorn_dict.keys():
+        sample = info_dataset[info_dataset.Acorn.isin(acorn_dict[key])].sample(size)
+        for i in range(len(sample)):
+            house_list.append(key + '_' +  sample.iloc[i,-1] + '_' + sample.iloc[i,0])
+    
+    return house_list
+
+def get_household(house):
+    block = house.split('_')[1] + '_' + house.split('_')[2]
+    house_selected = house.split('_')[-1]
+    holidays = pd.read_csv('uk_bank_holidays.csv')
+    holidays['Bank holidays'] = pd.to_datetime(holidays['Bank holidays'])
+    holidays = holidays.loc[(holidays['Bank holidays'].dt.year >= 2013)]
+    df = pd.read_csv(f'halfhourly_dataset/halfhourly_dataset/{block}.csv')
+    df = df.rename(columns={'LCLid':'house_hold','tstp':'time','energy(kWh/hh)':'Energy_kwh'})
+    df.iloc[df[df.Energy_kwh == 'Null'].Energy_kwh.index,2] = '0'
+    df.Energy_kwh = pd.to_numeric(df.Energy_kwh)
+    df.time = pd.to_datetime(df.time)
+    df = df.loc[((df['time'].dt.year >= 2013) & (df.time.dt.month.isin([1,2,3,4,5,6,7,8,9,10,11,12]))) | (df['time'].dt.year == 2014)]
+    df['holiday'] = df['time'].isin(holidays['Bank holidays']) #(df.time.dt.day_of_week >= 5) | (df['time'].isin(holidays['Bank holidays']))
+    df['holiday'] = df['holiday'].astype(int)
+    df = df[df.house_hold == house_selected]
+    
+    return df, house
+
 def transform_half_in_hourly(df : pd.DataFrame):
     """ 
         Description : a function where transform a dataframe with a halfhourly datetime in a hourly datetime dataframe
@@ -54,12 +84,12 @@ def add_weater_data(df:pd.DataFrame,df_weather:pd.DataFrame):
     df_merged = pd.merge(df,df_weather,how='left',on = 'time')
     return df_merged
 
-def add_weekend_holidays(df:pd.DataFrame):
+def add_holidays(df:pd.DataFrame):
     holidays = pd.read_csv('uk_bank_holidays.csv')
     holidays['Bank holidays'] = pd.to_datetime(holidays['Bank holidays'])
     holidays = holidays.loc[(holidays['Bank holidays'].dt.year >= 2013)]
-    df['weekend_holiday'] = (df.time.dt.day_of_week >= 5) | (df['time'].isin(holidays['Bank holidays']))
-    df['weekend_holiday'] = df['weekend_holiday'].astype(int)
+    df['holiday'] = df['time'].isin(holidays['Bank holidays']) #(df.time.dt.day_of_week >= 5) | (df['time'].isin(holidays['Bank holidays']))
+    df['holiday'] = df['holiday'].astype(int)
     return df
 
 def add_bool_weather_missing_values(df:pd.DataFrame):

@@ -10,38 +10,75 @@ warnings.filterwarnings("ignore")
 path = config.PATH_DATASETS
 list_csv = functions.get_csv_file_list(path)
 
-encoder = ['month', 'dayofweek_num', 'hour', 'weekend_holiday']
-decoder = ['month', 'dayofweek_num', 'hour', 'weekend_holiday']
+encoder_select = ['month',
+                'dayofweek_num',
+                'hour',
+                'bool_weather_missing_values',
+                'precipType',
+                'holiday']
+decoder_select = ['month',
+                'dayofweek_num',
+                'hour',
+                'bool_weather_missing_values',
+                'precipType',
+                'holiday']
+
+encoder = ['month',
+            'dayofweek_num',
+            'hour',
+            'holiday']
+decoder = ['month',
+            'dayofweek_num',
+            'hour',
+            'holiday']
 
 
+i = 0
 
 if __name__ == "__main__":
-    select_fatures = None
-    for csv in list_csv:
-        print(csv) 
+    select_fatures = True
+    for csv in list_csv[:1]:
+        print(i)
+        i+=1       
+        print(csv)
         df = functions.get_csv(path,csv)
-        util.run_TFT_model(df = df,
+        if select_fatures:
+            print(encoder_select)
+            util.run_TFT_model(df = df,
                            csv_file_name=csv,
-                           encoder_list=encoder,
-                           decoder_list=decoder,
-                           max_prediction_length = 168,
-                           max_encoder_length = len(df) - 168,
+                           encoder_list=encoder_select,
+                           decoder_list=decoder_select,
+                           max_prediction_length = 5,#168,
+                           max_encoder_length = 5, #len(df) - 168,
                            batch_size = 128,
                            patience=2,
                            select_fatures = select_fatures)
-        
-    if select_fatures:
-        functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_TFT_SELECT_FEATURES,
-                                                config.PATH_RESULTS_TFT_SELECT_FEATURES, 
-                                                "TFT")
+        else:
+            print(encoder)
+            util.run_TFT_model(df = df,
+                            csv_file_name=csv,
+                            encoder_list=encoder,
+                            decoder_list=decoder,
+                            max_prediction_length = 5,#168,
+                            max_encoder_length = 5, #len(df) - 168,
+                            batch_size = 128,
+                            patience=2,
+                            select_fatures = select_fatures)
+    if False:    
+        if select_fatures:
+            functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_TFT_SELECT_FEATURES,
+                                                    config.PATH_RESULTS_TFT_SELECT_FEATURES, 
+                                                    "TFT")
 
-        functions.cleaning_attention_results(config.PATH_ATTENTION_SELECT_FEATURES,
-                                             config.PATH_RESULTS_TFT_SELECT_FEATURES)
-    else:
-        print("Não está ocorrendo seleção de variáveis")
-        functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_TFT,
-                                                config.PATH_RESULTS_TFT, 
-                                                "TFT")
+            functions.cleaning_attention_results(config.PATH_ATTENTION_SELECT_FEATURES,
+                                                config.PATH_RESULTS_TFT_SELECT_FEATURES)
+        else:
+            print("Não está ocorrendo seleção de variáveis")
+            functions.cleaning_eval_metrics_results(config.PATH_METRICS_VALUES_TFT,
+                                                    config.PATH_RESULTS_TFT, 
+                                                    "TFT")
 
-        functions.cleaning_attention_results(config.PATH_ATTENTION,
-                                            config.PATH_RESULTS_TFT)        
+            functions.cleaning_attention_results(config.PATH_ATTENTION,
+                                                config.PATH_RESULTS_TFT) 
+    
+     

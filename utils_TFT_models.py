@@ -75,7 +75,7 @@ def run_TFT_model(df,csv_file_name,
                                                             'hour',
                                                             'bool_weather_missing_values',
                                                             'precipType',
-                                                            'weekend_holiday'
+                                                            'holiday'
                                                             #'icon',
                                                             #'summary'
                                                             ],
@@ -107,7 +107,7 @@ def run_TFT_model(df,csv_file_name,
                         time_varying_known_categoricals = [ 'month',
                                                             'dayofweek_num',
                                                             'hour',
-                                                            'weekend_holiday'],
+                                                            'holiday'],
                         min_encoder_length = max_encoder_length // 2,
                         max_encoder_length = max_encoder_length,
                         min_prediction_length=1,
@@ -115,9 +115,6 @@ def run_TFT_model(df,csv_file_name,
                         categorical_encoders = {'house_hold': NaNLabelEncoder(add_nan=True, warn=True),},
                         target_normalizer=None
         )
-    print("##########################################################")
-    print(training)
-    print("##########################################################")
 
     validation = TimeSeriesDataSet.from_dataset(training, 
                                                 df,
@@ -146,9 +143,6 @@ def run_TFT_model(df,csv_file_name,
                                                 optimizer = optimizer,
                                                 lstm_layers = lstm_layers
                                             )
-    print("##########################################################")
-    print(tft)
-    print("##########################################################")
     early_stop_callback = EarlyStopping(monitor = "val_loss",
                                     min_delta = 0.0001,
                                     patience = patience,
